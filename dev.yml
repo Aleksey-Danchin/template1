@@ -1,0 +1,58 @@
+services:
+    front:
+        build:
+            context: ./front
+            dockerfile: Dockerfile.dev
+        container_name: front
+        user: root
+        restart: always
+        depends_on:
+            - back
+        volumes:
+            - ./front:/app
+            - ./nginx/dev:/app/.cert
+        stdin_open: true
+        tty: true
+
+    back:
+        build:
+            context: ./back
+            dockerfile: Dockerfile.dev
+        container_name: back
+        restart: always
+        depends_on:
+            - database
+        volumes:
+            - $PWD/back/:/app
+            - $PWD/nginx/dev:/app/.cert
+        environment:
+            - POSTGRES_HOST=$POSTGRES_HOST
+            - POSTGRES_PORT=$POSTGRES_PORT
+            - POSTGRES_USERNAME=$POSTGRES_USERNAME
+            - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+            - POSTGRES_DATABASE=$POSTGRES_DATABASE
+        ports:
+            - 5555:5555
+
+    database:
+        image: postgres:14
+        container_name: postgres
+        restart: always
+        environment:
+            - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+        volumes:
+            - $PWD/pgdata:/var/lib/postgresql/data
+
+    nginx:
+        image: nginx
+        container_name: nginx
+        restart: always
+        depends_on:
+            - front
+            - back
+        ports:
+            - 80:80
+            - 443:443
+        volumes:
+            - $PWD/nginx/dev/nginx.conf:/etc/nginx/nginx.conf
+            - $PWD/nginx/dev:/etc/nginx/cert

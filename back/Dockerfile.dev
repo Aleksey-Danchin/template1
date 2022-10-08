@@ -1,0 +1,12 @@
+FROM node:18
+
+WORKDIR /app
+ENV NODE_ENV=development
+
+COPY package*.json ./
+RUN npm install
+RUN npm install -g nodemon typescript ts-node
+COPY . .
+
+USER root
+CMD nodemon
